@@ -1,38 +1,37 @@
 // api/time.js
-import fetch from "node-fetch";
-import { JSDOM } from "jsdom";
 
-export default async function handler(req, res) {
-  try {
-    const url = "https://www.oraesatta.co/";
+const ntpClient = require('ntp-client');
 
-    const response = await fetch(url);
-    const html = await response.text();
+module.exports = (req, res) => {
 
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
-
-    // PROVVISORIO: testo generico del titolo
-    // Poi aggiorniamo con il selettore giusto quando analizziamo l’HTML finale
-    const timeElement = document.querySelector("title");
-
-    if (!timeElement) {
-      return res.status(500).json({
-        error: "CLOCK_ELEMENT_NOT_FOUND"
+  ntpClient.getNetworkTime('ntp1.inrim.it', 123, function(err, date) {
+    if (err) {
+      res.status(500).json({
+        error: 'NTP_ERROR',
+        details: err.toString()
       });
+      return;
     }
 
-    const rawTitle = timeElement.textContent.trim();
+    // Converte in ISO (UTC reale)
+    const utc = date.toISOString();
+
+    // Calcolo GMT+1
+    const local = new Date(date.getTime() + (1 * 60 * 60 * 1000));
+
+    const formatted =
+      `${local.getDate().toString().padStart(2, '0')}/` +
+      `${(local.getMonth() + 1).toString().padStart(2, '0')}/` +
+      `${local.getFullYear()} – ` +
+      `${local.getHours().toString().padStart(2, '0')}:` +
+      `${local.getMinutes().toString().padStart(2, '0')}:` +
+      `${local.getSeconds().toString().padStart(2, '0')} GMT+1`;
 
     res.status(200).json({
-      source: "oraesatta.co",
-      extracted: rawTitle
+      source: "INRIM NTP (ntp1.inrim.it)",
+      utc,
+      local_time: formatted
     });
+  });
 
-  } catch (err) {
-    res.status(500).json({
-      error: "SCRAPING_ERROR",
-      details: err.message
-    });
-  }
-}
+};
