@@ -1,9 +1,9 @@
 {
   "name": "nexmen-time-gateway",
   "version": "1.0.0",
-  "description": "Gateway orario Nexmen basato su NTP (INRIM)",
-  "main": "api/time.js",
-  "dependencies": {
-    "ntp-client": "^1.1.3"
+  "description": "Gateway orario Nexmen con client NTP UDP nativo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
   }
 }
